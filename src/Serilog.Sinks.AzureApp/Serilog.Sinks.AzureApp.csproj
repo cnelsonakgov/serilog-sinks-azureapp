@@ -1,6 +1,12 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
+    <PackageId>Serilog.Sinks.AzureApp</PackageId>
+    <Version>2.1.1</Version>
+    <Authors>Curtis Nelson</Authors>
+    <Company>AlaskaDHSS</Company>
+    <Description>Azure diagnostic application logging sink for Serilog</Description>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <TargetFramework>netstandard2.0</TargetFramework>
   </PropertyGroup>
 
