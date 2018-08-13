@@ -13,6 +13,7 @@
 // limitations under the License.
 
 using System;
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.IO;
 using Serilog.Core;
@@ -24,44 +25,60 @@ namespace Serilog.Sinks.AzureApp
 {
     class AzureAppSink : ILogEventSink
     {
-        readonly ITextFormatter _textFormatter;
-        readonly Microsoft.Extensions.Logging.ILogger _logger;
+        /// <summary>
+        /// Our very own Microsoft.Extensions.LoggerFactory, this is where we'll send Serilog events so that Azure can pick up the logs.
+        /// We expect that Serilog has replaced this in the app's services.
+        /// </summary>
+        static ILoggerFactory CoreLoggerFactory { get; } = new LoggerFactory().AddAzureWebAppDiagnostics();
+
+        /// <summary>
+        /// The Microsoft.Extensions.LoggerFactory implementation of CreateLogger(string category) uses lock(_sync) before looking in its dictionary.
+        /// We'll use our own ConcurrentDictionary for performance, since we lookup the category on every log write.
+        /// </summary>
+        readonly ConcurrentDictionary<string, Microsoft.Extensions.Logging.ILogger> loggerCategories = new ConcurrentDictionary<string, Microsoft.Extensions.Logging.ILogger>();
+
+        readonly ITextFormatter textFormatter;
 
         public AzureAppSink(ITextFormatter textFormatter)
         {
-            if (textFormatter == null) throw new ArgumentNullException(nameof(textFormatter));
-       
-            _textFormatter = textFormatter;
-            _logger = AzureAppLogging.CreateLogger<AzureAppSink>();
+            this.textFormatter = textFormatter ?? throw new ArgumentNullException(nameof(textFormatter));
         }
 
         public void Emit(LogEvent logEvent)
         {
-            if (logEvent == null) throw new ArgumentNullException(nameof(logEvent));
+            if (logEvent == null) 
+                throw new ArgumentNullException(nameof(logEvent));
            
             var sr = new StringWriter();
-            _textFormatter.Format(logEvent, sr);
+            textFormatter.Format(logEvent, sr);
             var text = sr.ToString().Trim();
 
-            if (logEvent.Level == LogEventLevel.Fatal)
-                _logger.LogCritical(text);
-            else if (logEvent.Level == LogEventLevel.Error)
-                _logger.LogError(text);
-            else if (logEvent.Level == LogEventLevel.Warning)
-                _logger.LogWarning(text);
-            else if (logEvent.Level == LogEventLevel.Information)
-                _logger.LogInformation(text);
-            else if (logEvent.Level == LogEventLevel.Debug)
-                _logger.LogDebug(text);
-            else
-                _logger.LogTrace(text);
-        }
+            var category = logEvent.Properties.TryGetValue("SourceContext", out var value) ? value.ToString() : "";
+            var logger = loggerCategories.GetOrAdd(category, s => CoreLoggerFactory.CreateLogger(s));
 
-        public static class AzureAppLogging
-        {
-            public static ILoggerFactory LoggerFactory {get;} = new LoggerFactory().AddAzureWebAppDiagnostics();
-            public static Microsoft.Extensions.Logging.ILogger CreateLogger<T>() =>
-                LoggerFactory.CreateLogger<T>();
+            switch (logEvent.Level)
+            {
+                case LogEventLevel.Fatal:
+                    logger.LogCritical(text);
+                    break;
+                case LogEventLevel.Error:
+                    logger.LogError(text);
+                    break;
+                case LogEventLevel.Warning:
+                    logger.LogWarning(text);
+                    break;
+                case LogEventLevel.Information:
+                    logger.LogInformation(text);
+                    break;
+                case LogEventLevel.Debug:
+                    logger.LogDebug(text);
+                    break;
+                case LogEventLevel.Verbose:
+                    logger.LogTrace(text);
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
         }
     }
 }
