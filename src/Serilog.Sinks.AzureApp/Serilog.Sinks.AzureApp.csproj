@@ -2,11 +2,17 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
+    <PackageId>Serilog.Sinks.AzureApp</PackageId>
+    <Version>2.0.0</Version>
+    <Authors>Curtis Nelson</Authors>
+    <Company>AlaskaDHSS</Company>
+    <Description>Azure diagnostic application logging sink for Serilog</Description>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.Extensions.Logging.AzureAppServices" Version="2.1.1" />
-    <PackageReference Include="Serilog.AspNetCore" Version="2.1.1" />
+    <PackageReference Include="Microsoft.Extensions.Logging.AzureAppServices" Version="2.0.0" />
+    <PackageReference Include="Serilog.AspNetCore" Version="2.0.0" />
   </ItemGroup>
 
 </Project>
