@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <PackageId>Serilog.Sinks.AzureApp</PackageId>
-    <Version>2.1.0</Version>
+    <Version>2.1.0.1</Version>
     <Authors>Curtis Nelson</Authors>
     <Company>AlaskaDHSS</Company>
     <Description>Azure diagnostic application logging sink for Serilog</Description>
