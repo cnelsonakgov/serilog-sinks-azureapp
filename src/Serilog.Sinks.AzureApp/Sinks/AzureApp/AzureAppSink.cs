@@ -29,7 +29,7 @@ namespace Serilog.Sinks.AzureApp
         /// Our very own Microsoft.Extensions.LoggerFactory, this is where we'll send Serilog events so that Azure can pick up the logs.
         /// We expect that Serilog has replaced this in the app's services.
         /// </summary>
-        static ILoggerFactory CoreLoggerFactory { get; } = new LoggerFactory().AddAzureWebAppDiagnostics();
+        static ILoggerFactory CoreLoggerFactory { get; } = LoggerFactory.Create(builder => builder.AddAzureWebAppDiagnostics());
 
         /// <summary>
         /// The Microsoft.Extensions.LoggerFactory implementation of CreateLogger(string category) uses lock(_sync) before looking in its dictionary.
